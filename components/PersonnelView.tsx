@@ -1,0 +1,266 @@
+// components/PersonnelView.tsx
+import React, { useState, useMemo, useEffect } from 'react';
+import { Personnel, Unit } from '../types';
+import { PlusIcon, EditIcon, TrashIcon, UserPlusIcon, SortIcon, ArrowUpIcon, ArrowDownIcon } from './icons';
+import PersonnelFormModal from './PersonnelFormModal';
+import CreateOperatorModal from './CreateOperatorModal';
+import { supabase } from '../supabaseClient';
+import Pagination from './Pagination';
+import Toast from './Toast';
+
+interface PersonnelViewProps {
+    personnel: Personnel[];
+    setPersonnel: React.Dispatch<React.SetStateAction<Personnel[]>>;
+    units: Unit[];
+}
+
+type SortableKeys = 'name' | 'rank' | 'unitId' | 'userEmail';
+type SortDirection = 'ascending' | 'descending';
+interface SortConfig {
+    key: SortableKeys;
+    direction: SortDirection;
+}
+
+const PersonnelView: React.FC<PersonnelViewProps> = ({ personnel, setPersonnel, units }) => {
+    const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+    const [personnelToEdit, setPersonnelToEdit] = useState<Personnel | null>(null);
+    const [isOperatorModalOpen, setIsOperatorModalOpen] = useState(false);
+    const [personnelForOperator, setPersonnelForOperator] = useState<Personnel | null>(null);
+    const [notification, setNotification] = useState('');
+    const [searchTerm, setSearchTerm] = useState('');
+    const [unitFilter, setUnitFilter] = useState('all');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage] = useState(15);
+    const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
+
+    const unitMap = useMemo(() => new Map(units.map(u => [u.id, u.name])), [units]);
+
+    const filteredPersonnel = useMemo(() => {
+        let tempPersonnel = [...personnel];
+
+        if (unitFilter !== 'all') {
+            tempPersonnel = tempPersonnel.filter(p => p.unitId === unitFilter);
+        }
+
+        if (searchTerm) {
+            const lowercasedTerm = searchTerm.toLowerCase();
+            tempPersonnel = tempPersonnel.filter(p =>
+                p.name.toLowerCase().includes(lowercasedTerm) ||
+                p.rank.toLowerCase().includes(lowercasedTerm) ||
+                (p.userEmail || '').toLowerCase().includes(lowercasedTerm) ||
+                (unitMap.get(p.unitId) || '').toLowerCase().includes(lowercasedTerm)
+            );
+        }
+        
+         if (sortConfig !== null) {
+            tempPersonnel.sort((a, b) => {
+                let aValue: string | null | undefined;
+                let bValue: string | null | undefined;
+
+                switch(sortConfig.key) {
+                    case 'unitId':
+                        aValue = unitMap.get(a.unitId);
+                        bValue = unitMap.get(b.unitId);
+                        break;
+                    case 'userEmail':
+                        aValue = a.userEmail;
+                        bValue = b.userEmail;
+                        break;
+                    default: // name, rank
+                        aValue = a[sortConfig.key];
+                        bValue = b[sortConfig.key];
+                }
+                
+                // Treat null or undefined as empty strings for consistent sorting
+                aValue = aValue || '';
+                bValue = bValue || '';
+
+                if (aValue < bValue) {
+                    return sortConfig.direction === 'ascending' ? -1 : 1;
+                }
+                if (aValue > bValue) {
+                    return sortConfig.direction === 'ascending' ? 1 : -1;
+                }
+                return 0;
+            });
+        } else {
+             tempPersonnel.sort((a, b) => a.name.localeCompare(b.name));
+        }
+        
+        return tempPersonnel;
+
+    }, [personnel, searchTerm, unitFilter, unitMap, sortConfig]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, unitFilter, sortConfig]);
+
+
+    const openFormModal = (p: Personnel | null = null) => {
+        setPersonnelToEdit(p);
+        setIsFormModalOpen(true);
+    };
+    
+    const openOperatorModal = (p: Personnel) => {
+        setPersonnelForOperator(p);
+        setIsOperatorModalOpen(true);
+    };
+
+    const handleDelete = async (personnelId: string) => {
+        if (window.confirm('Apakah Anda yakin ingin menghapus personil ini? Tindakan ini juga akan menghapus akun login terkait secara permanen.')) {
+            try {
+                const { error: invokeError } = await supabase.functions.invoke('delete-personnel', {
+                    body: { personnelId },
+                });
+
+                if (invokeError) {
+                    const errorMessage = invokeError.context?.error || invokeError.message;
+                    throw new Error(errorMessage);
+                }
+                
+                setPersonnel(personnel.filter(p => p.id !== personnelId));
+                setNotification('Data personil berhasil dihapus.');
+
+            } catch (error: any) {
+                alert(`Gagal menghapus personil: ${error.message}`);
+            }
+        }
+    };
+    
+    const handleOperatorCreationSuccess = (createdPersonnel: Personnel) => {
+        setPersonnel(prev => prev.map(p => p.id === createdPersonnel.id ? createdPersonnel : p));
+        setNotification(`Akun operator untuk ${createdPersonnel.name} berhasil dibuat.`);
+    };
+
+    // Sorting Logic
+    const requestSort = (key: SortableKeys) => {
+        let direction: SortDirection = 'ascending';
+        if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
+            direction = 'descending';
+        }
+        setSortConfig({ key, direction });
+    };
+
+    const getSortIcon = (key: SortableKeys) => {
+        if (!sortConfig || sortConfig.key !== key) {
+            return <SortIcon />;
+        }
+        if (sortConfig.direction === 'ascending') {
+            return <ArrowUpIcon className="text-primary" />;
+        }
+        return <ArrowDownIcon className="text-primary" />;
+    };
+
+    const SortableHeader: React.FC<{ label: string; sortKey: SortableKeys; className?: string }> = ({ label, sortKey, className = '' }) => (
+        <th scope="col" className={`px-6 py-3 ${className}`}>
+            <button className="flex items-center gap-1.5 group" onClick={() => requestSort(sortKey)}>
+                {label}
+                <span className="opacity-50 group-hover:opacity-100 transition-opacity">
+                    {getSortIcon(sortKey)}
+                </span>
+            </button>
+        </th>
+    );
+
+    // Pagination Logic
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentItems = filteredPersonnel.slice(indexOfFirstItem, indexOfLastItem);
+    const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+
+
+    return (
+        <div className="bg-white dark:bg-dark-900 p-6 rounded-lg shadow-lg">
+            {notification && <Toast message={notification} onClose={() => setNotification('')} />}
+            <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+                <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Manajemen Personil</h1>
+                <div className="flex items-center gap-2 w-full md:w-auto">
+                    <input
+                        type="text"
+                        placeholder="Cari personil..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="p-2 border border-gray-300 rounded w-full md:w-auto bg-gray-50 dark:bg-dark-800 dark:border-dark-700 focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                     <select
+                        value={unitFilter}
+                        onChange={(e) => setUnitFilter(e.target.value)}
+                        className="p-2 border border-gray-300 rounded bg-gray-50 dark:bg-dark-800 dark:border-dark-700 focus:outline-none focus:ring-2 focus:ring-primary"
+                    >
+                        <option value="all">Semua Unit</option>
+                        {units.map(unit => (
+                            <option key={unit.id} value={unit.id}>{unit.name}</option>
+                        ))}
+                    </select>
+                    <button onClick={() => openFormModal()} className="flex items-center bg-primary hover:bg-blue-700 text-white font-bold py-2 px-4 rounded whitespace-nowrap">
+                        <PlusIcon />
+                        <span className="ml-2 hidden sm:inline">Tambah</span>
+                    </button>
+                </div>
+            </div>
+            <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                    <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-dark-700 dark:text-gray-400">
+                        <tr>
+                            <SortableHeader label="Nama" sortKey="name" />
+                            <SortableHeader label="Pangkat" sortKey="rank" />
+                            <SortableHeader label="Unit" sortKey="unitId" />
+                            <SortableHeader label="Akun Login" sortKey="userEmail" />
+                            <th scope="col" className="px-6 py-3 text-right">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {currentItems.map(p => (
+                            <tr key={p.id} className="bg-white border-b dark:bg-dark-900 dark:border-dark-700 hover:bg-gray-50 dark:hover:bg-dark-800">
+                                <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">{p.name}</td>
+                                <td className="px-6 py-4">{p.rank}</td>
+                                <td className="px-6 py-4">{unitMap.get(p.unitId) || 'Belum Ditunjuk'}</td>
+                                <td className="px-6 py-4">
+                                    {p.userId && p.userEmail ? (
+                                        <span className="text-xs text-gray-500 dark:text-gray-400">{p.userEmail}</span>
+                                    ) : (
+                                        <button 
+                                            onClick={() => openOperatorModal(p)}
+                                            className="flex items-center text-xs py-1 px-2 rounded bg-blue-500 text-white hover:bg-blue-600 transition-colors duration-200"
+                                        >
+                                            <UserPlusIcon width="14" height="14" />
+                                            <span className="ml-1.5">Jadikan Operator</span>
+                                        </button>
+                                    )}
+                                </td>
+                                <td className="px-6 py-4 text-right space-x-2">
+                                    <button onClick={() => openFormModal(p)} className="p-1 text-yellow-500 hover:text-yellow-700" title="Edit"><EditIcon /></button>
+                                    <button onClick={() => handleDelete(p.id)} className="p-1 text-red-500 hover:text-red-700" title="Hapus"><TrashIcon /></button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+
+            <Pagination itemsPerPage={itemsPerPage} totalItems={filteredPersonnel.length} currentPage={currentPage} paginate={paginate} />
+
+            {isFormModalOpen && (
+                <PersonnelFormModal
+                    isOpen={isFormModalOpen}
+                    onClose={() => setIsFormModalOpen(false)}
+                    setPersonnel={setPersonnel}
+                    personnelToEdit={personnelToEdit}
+                    units={units}
+                    onActionSuccess={setNotification}
+                />
+            )}
+            
+            {isOperatorModalOpen && personnelForOperator && (
+                <CreateOperatorModal
+                    isOpen={isOperatorModalOpen}
+                    onClose={() => setIsOperatorModalOpen(false)}
+                    personnel={personnelForOperator}
+                    onSuccess={handleOperatorCreationSuccess}
+                />
+            )}
+        </div>
+    );
+};
+
+export default PersonnelView;

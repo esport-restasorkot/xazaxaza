@@ -1,0 +1,30 @@
+
+import React from 'react';
+import Sidebar from './Sidebar';
+import Header from './Header';
+import { UserRole } from '../types';
+
+interface LayoutProps {
+  children: React.ReactNode;
+  currentView: string;
+  setCurrentView: (view: string) => void;
+  userRole: UserRole;
+  operatorUnitName: string | null;
+  onLogout: () => void;
+}
+
+const Layout: React.FC<LayoutProps> = ({ children, currentView, setCurrentView, userRole, operatorUnitName, onLogout }) => {
+  return (
+    <div className="flex h-screen bg-gray-100 dark:bg-dark-800 font-sans text-gray-900 dark:text-gray-200">
+      <Sidebar currentView={currentView} setCurrentView={setCurrentView} userRole={userRole} />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <Header userRole={userRole} operatorUnitName={operatorUnitName} onLogout={onLogout} />
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-200 dark:bg-dark-800 p-6">
+          {children}
+        </main>
+      </div>
+    </div>
+  );
+};
+
+export default Layout;

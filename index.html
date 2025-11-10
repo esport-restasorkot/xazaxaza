@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Crime Track</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              'primary': '#3c8dbc',
+              'success': '#00a65a',
+              'info': '#00c0ef',
+              'warning': '#f39c12',
+              'danger': '#f56954',
+              'dark': {
+                '700': '#343a40',
+                '800': '#2c3136',
+                '900': '#222d32', 
+                '950': '#1a2226'
+              },
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translate3d(0, -20%, 0);
+        }
+        to {
+            opacity: 1;
+            transform: translate3d(0, 0, 0);
+        }
+      }
+      .animate-fade-in-down {
+        animation: fadeInDown 0.5s ease-out forwards;
+      }
+      
+      @media print {
+        body {
+          background-color: white !important;
+          color: black !important;
+        }
+
+        /* Sembunyikan semua elemen yang tidak perlu dicetak secara default */
+        aside, header, .no-print {
+          display: none !important;
+        }
+
+        /* Jika ada modal yang terbuka, sembunyikan konten utama di belakangnya */
+        .fixed.inset-0 ~ main {
+          display: none !important;
+        }
+
+        /* Atur ulang layout utama agar konten mengisi halaman */
+        #root, .flex-1, main {
+          display: block !important;
+          height: auto !important;
+          overflow: visible !important;
+          padding: 0 !important;
+          margin: 0 !important;
+        }
+        
+        /* Styling untuk container konten yang akan dicetak */
+        .printable-container {
+          margin: 0.5in !important;
+          box-shadow: none !important;
+          border: none !important;
+        }
+
+        /* Atur ulang styling untuk dark mode */
+        .dark, .dark body, .dark #root, 
+        .dark .dark\:bg-dark-900, .dark .dark\:bg-dark-800, .dark .dark\:bg-dark-700, 
+        .dark .dark\:bg-dark-700\/50, .dark .dark\:bg-dark-700\/80 {
+            background-color: white !important;
+            color: black !important;
+        }
+        .dark .dark\:text-gray-100, .dark .dark\:text-gray-200, .dark .dark\:text-gray-300, .dark .dark\:text-gray-400, .dark .dark\:text-white {
+            color: black !important;
+        }
+        .dark .dark\:border-dark-700, .dark .dark\:border-dark-800 {
+            border-color: #ddd !important;
+        }
+
+        /* Tambahkan judul dan tanggal cetak pada container utama */
+        .printable-container::before {
+          content: attr(data-title);
+          display: block;
+          font-size: 20px;
+          font-weight: bold;
+          margin-bottom: 1rem;
+          text-align: center;
+        }
+        .printable-container::after {
+          content: "Dicetak pada: " attr(data-date);
+          display: block;
+          font-size: 10px;
+          margin-top: 1rem;
+          text-align: right;
+        }
+
+        /* Aturan cetak khusus untuk MODAL */
+        /* Sembunyikan overlay modal */
+        .fixed.inset-0 {
+          position: static !important;
+          background: none !important;
+        }
+
+        /* Buat konten modal mengisi area cetak */
+        #modal-content-container {
+          width: 100% !important;
+          max-width: 100% !important;
+          max-height: none !important;
+          height: auto !important;
+          box-shadow: none !important;
+          border: none !important;
+          transform: none !important;
+          display: block !important;
+          margin: 0.5in !important;
+          background-color: white !important;
+          color: black !important;
+          overflow: visible !important;
+        }
+        
+        #modal-content-container .overflow-y-auto {
+            overflow: visible !important;
+        }
+        
+        /* Format header modal */
+        #modal-content-container > div:first-child {
+            border-bottom: none !important;
+            padding: 0 0 1rem 0 !important;
+            text-align: center;
+        }
+        #modal-content-container > div:first-child h3 {
+          font-size: 20px !important;
+          font-weight: bold !important;
+          color: black !important;
+        }
+        #modal-content-container::after {
+            content: "Dicetak pada: " attr(data-date);
+            display: block;
+            font-size: 10px;
+            margin-top: 1rem;
+            text-align: right;
+        }
+
+        /* Styling untuk tabel saat dicetak */
+        table {
+          width: 100% !important;
+          border-collapse: collapse !important;
+          font-size: 10pt !important;
+        }
+        thead { display: table-header-group; }
+        tr, td, th { page-break-inside: avoid !important; }
+        th, td {
+          border: 1px solid #ddd !important;
+          padding: 6px !important;
+        }
+        .bg-gray-50, .bg-gray-100 { background-color: #f9f9f9 !important; }
+        .bg-yellow-200, .bg-green-200 {
+            background-color: transparent !important;
+            border: 1px solid #ccc;
+        }
+        .shadow-lg { box-shadow: none !important; }
+        .rounded-lg { border-radius: 0 !important; }
+        .p-6 { padding: 0 !important; }
+      }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "@supabase/supabase-js": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm",
+    "deno.ns": "https://aistudiocdn.com/deno.ns@^0.8.0"
+  }
+}
+</script>
+</head>
+  <body class="bg-gray-100 dark:bg-dark-800">
+    <div id="root" class="dark"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>

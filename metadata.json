@@ -1,0 +1,5 @@
+{
+  "name": "Crime Track",
+  "description": "A web application for the Satreskrim Polresta Sorong Kota to manage crime reports, personnel, and unit assignments, inspired by the AdminLTE UI.",
+  "requestFramePermissions": []
+}
