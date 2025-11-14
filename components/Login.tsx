@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
-import { ShieldIcon } from './icons';
 
 const Login: React.FC = () => {
     const [loading, setLoading] = useState(false);
@@ -25,7 +24,7 @@ const Login: React.FC = () => {
             <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-lg dark:bg-dark-900">
                 <div className="text-center">
                     <div className="flex justify-center mb-4">
-                         <ShieldIcon className="h-12 w-12 text-primary"/>
+                         <img src="https://raw.githubusercontent.com/esport-restasorkot/gmbrax/main/reskrim.png" alt="Crime Track Logo" className="h-16 w-16 object-contain"/>
                     </div>
                     <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Login ke Crime Track</h1>
                     <p className="mt-2 text-gray-600 dark:text-gray-400">Silakan masukkan kredensial Anda.</p>

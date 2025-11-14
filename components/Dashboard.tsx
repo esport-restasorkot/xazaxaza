@@ -115,8 +115,10 @@ const ReportAnalyticsSection: React.FC<{ title: string; reports: Report[] }> = (
         }, {} as { [key: string]: number });
 
         return Object.entries(caseCounts)
-          .sort(([, a], [, b]) => b - a)
-          .slice(0, 10);
+          // FIX: The TypeScript compiler was not correctly inferring the value from Object.entries
+          // as a number, causing an arithmetic error. Added an explicit type assertion to fix it.
+          .sort((a, b) => (b[1] as number) - (a[1] as number))
+          .slice(0, 10) as [string, number][];
     }, [reports]);
 
     const monthlyData = useMemo(() => {

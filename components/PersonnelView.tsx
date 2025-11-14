@@ -14,7 +14,7 @@ interface PersonnelViewProps {
     units: Unit[];
 }
 
-type SortableKeys = 'name' | 'rank' | 'unitId' | 'userEmail';
+type SortableKeys = 'name' | 'rank' | 'unitId';
 type SortDirection = 'ascending' | 'descending';
 interface SortConfig {
     key: SortableKeys;
@@ -47,7 +47,6 @@ const PersonnelView: React.FC<PersonnelViewProps> = ({ personnel, setPersonnel, 
             tempPersonnel = tempPersonnel.filter(p =>
                 p.name.toLowerCase().includes(lowercasedTerm) ||
                 p.rank.toLowerCase().includes(lowercasedTerm) ||
-                (p.userEmail || '').toLowerCase().includes(lowercasedTerm) ||
                 (unitMap.get(p.unitId) || '').toLowerCase().includes(lowercasedTerm)
             );
         }
@@ -61,10 +60,6 @@ const PersonnelView: React.FC<PersonnelViewProps> = ({ personnel, setPersonnel, 
                     case 'unitId':
                         aValue = unitMap.get(a.unitId);
                         bValue = unitMap.get(b.unitId);
-                        break;
-                    case 'userEmail':
-                        aValue = a.userEmail;
-                        bValue = b.userEmail;
                         break;
                     default: // name, rank
                         aValue = a[sortConfig.key];
@@ -205,7 +200,6 @@ const PersonnelView: React.FC<PersonnelViewProps> = ({ personnel, setPersonnel, 
                             <SortableHeader label="Nama" sortKey="name" />
                             <SortableHeader label="Pangkat" sortKey="rank" />
                             <SortableHeader label="Unit" sortKey="unitId" />
-                            <SortableHeader label="Akun Login" sortKey="userEmail" />
                             <th scope="col" className="px-6 py-3 text-right">Aksi</th>
                         </tr>
                     </thead>
@@ -215,20 +209,16 @@ const PersonnelView: React.FC<PersonnelViewProps> = ({ personnel, setPersonnel, 
                                 <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">{p.name}</td>
                                 <td className="px-6 py-4">{p.rank}</td>
                                 <td className="px-6 py-4">{unitMap.get(p.unitId) || 'Belum Ditunjuk'}</td>
-                                <td className="px-6 py-4">
-                                    {p.userId && p.userEmail ? (
-                                        <span className="text-xs text-gray-500 dark:text-gray-400">{p.userEmail}</span>
-                                    ) : (
+                                <td className="px-6 py-4 text-right space-x-2">
+                                    {!p.userId && (
                                         <button 
                                             onClick={() => openOperatorModal(p)}
-                                            className="flex items-center text-xs py-1 px-2 rounded bg-blue-500 text-white hover:bg-blue-600 transition-colors duration-200"
+                                            className="p-1 text-blue-500 hover:text-blue-700"
+                                            title="Jadikan Operator"
                                         >
-                                            <UserPlusIcon width="14" height="14" />
-                                            <span className="ml-1.5">Jadikan Operator</span>
+                                            <UserPlusIcon />
                                         </button>
                                     )}
-                                </td>
-                                <td className="px-6 py-4 text-right space-x-2">
                                     <button onClick={() => openFormModal(p)} className="p-1 text-yellow-500 hover:text-yellow-700" title="Edit"><EditIcon /></button>
                                     <button onClick={() => handleDelete(p.id)} className="p-1 text-red-500 hover:text-red-700" title="Hapus"><TrashIcon /></button>
                                 </td>

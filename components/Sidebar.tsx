@@ -21,7 +21,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, userRole
   return (
     <aside className="w-64 bg-dark-900 text-gray-200 flex-shrink-0 hidden md:flex md:flex-col">
       <div className="h-16 flex items-center justify-center bg-dark-950">
-        <ShieldIcon className="h-8 w-8 text-primary"/>
+        <img src="https://raw.githubusercontent.com/esport-restasorkot/gmbrax/main/reskrim.png" alt="Crime Track Logo" className="h-10 w-10 object-contain"/>
         <span className="ml-2 text-xl font-semibold">Crime Track</span>
       </div>
       <nav className="mt-4 flex-1">
