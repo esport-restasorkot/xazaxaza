@@ -19,10 +19,28 @@ const App: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [currentView, setCurrentView] = useState('dashboard');
+    const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
 
     const [reports, setReports] = useState<Report[]>([]);
     const [units, setUnits] = useState<Unit[]>([]);
     const [personnel, setPersonnel] = useState<Personnel[]>([]);
+
+    const toggleTheme = () => {
+        const newTheme = theme === 'light' ? 'dark' : 'light';
+        setTheme(newTheme);
+    };
+
+    useEffect(() => {
+        const root = document.getElementById('root');
+        if (root) {
+            if (theme === 'dark') {
+                root.classList.add('dark');
+            } else {
+                root.classList.remove('dark');
+            }
+        }
+        localStorage.setItem('theme', theme);
+    }, [theme]);
     
     useEffect(() => {
         supabase.auth.getSession().then(({ data: { session } }) => {
@@ -203,7 +221,7 @@ const App: React.FC = () => {
     const renderView = () => {
         switch (currentView) {
             case 'dashboard':
-                return <Dashboard reports={reports} userRole={userRole} operatorUnitId={operatorUnitId} units={units} />;
+                return <Dashboard reports={reports} userRole={userRole} operatorUnitId={operatorUnitId} units={units} personnel={personnel} />;
             case 'reports':
                 return <ReportsView reports={reports} setReports={setReports} personnel={personnel} units={units} userRole={userRole} operatorUnitId={operatorUnitId} />;
             case 'crime-data':
@@ -215,7 +233,7 @@ const App: React.FC = () => {
             case 'units':
                 return <UnitsView units={units} setUnits={setUnits} />;
             default:
-                return <Dashboard reports={reports} userRole={userRole} operatorUnitId={operatorUnitId} units={units} />;
+                return <Dashboard reports={reports} userRole={userRole} operatorUnitId={operatorUnitId} units={units} personnel={personnel} />;
         }
     };
 
@@ -226,6 +244,8 @@ const App: React.FC = () => {
             userRole={userRole}
             operatorUnitName={operatorUnitName}
             onLogout={handleLogout}
+            theme={theme}
+            toggleTheme={toggleTheme}
         >
             {renderView()}
         </Layout>

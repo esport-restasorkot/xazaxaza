@@ -1,14 +1,17 @@
 
 import React from 'react';
 import { UserRole } from '../types';
+import { SunIcon, MoonIcon } from './icons';
 
 interface HeaderProps {
     userRole: UserRole;
     operatorUnitName: string | null;
     onLogout: () => void;
+    theme: string;
+    toggleTheme: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ userRole, operatorUnitName, onLogout }) => {
+const Header: React.FC<HeaderProps> = ({ userRole, operatorUnitName, onLogout, theme, toggleTheme }) => {
     const displayName = userRole === UserRole.OPERATOR && operatorUnitName
         ? `${userRole} - ${operatorUnitName}`
         : userRole;
@@ -19,6 +22,13 @@ const Header: React.FC<HeaderProps> = ({ userRole, operatorUnitName, onLogout })
                 <h1 className="text-xl font-semibold">Satreskrim Polresta Sorong Kota</h1>
             </div>
             <div className="flex items-center space-x-4">
+                 <button 
+                    onClick={toggleTheme}
+                    className="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-dark-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:focus:ring-offset-dark-900"
+                    title="Ganti tema"
+                 >
+                    {theme === 'dark' ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
+                </button>
                  <div className="text-right">
                     <p className="font-semibold text-gray-800 dark:text-gray-200 capitalize">{displayName}</p>
                     <p className="text-xs text-green-500">Online</p>

@@ -11,14 +11,16 @@ interface LayoutProps {
   userRole: UserRole;
   operatorUnitName: string | null;
   onLogout: () => void;
+  theme: string;
+  toggleTheme: () => void;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, currentView, setCurrentView, userRole, operatorUnitName, onLogout }) => {
+const Layout: React.FC<LayoutProps> = ({ children, currentView, setCurrentView, userRole, operatorUnitName, onLogout, theme, toggleTheme }) => {
   return (
     <div className="flex h-screen bg-gray-100 dark:bg-dark-800 font-sans text-gray-900 dark:text-gray-200">
       <Sidebar currentView={currentView} setCurrentView={setCurrentView} userRole={userRole} />
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Header userRole={userRole} operatorUnitName={operatorUnitName} onLogout={onLogout} />
+        <Header userRole={userRole} operatorUnitName={operatorUnitName} onLogout={onLogout} theme={theme} toggleTheme={toggleTheme} />
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-200 dark:bg-dark-800 p-6">
           {children}
         </main>

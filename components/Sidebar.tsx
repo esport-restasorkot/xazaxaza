@@ -19,10 +19,10 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, userRole
   ];
 
   return (
-    <aside className="w-64 bg-dark-900 text-gray-200 flex-shrink-0 hidden md:flex md:flex-col">
-      <div className="h-16 flex items-center justify-center bg-dark-950">
+    <aside className="w-64 bg-white dark:bg-dark-900 text-gray-700 dark:text-gray-200 flex-shrink-0 hidden md:flex md:flex-col">
+      <div className="h-16 flex items-center justify-center border-b border-gray-200 dark:border-transparent bg-white dark:bg-dark-950">
         <img src="https://raw.githubusercontent.com/esport-restasorkot/gmbrax/main/reskrim.png" alt="Crime Track Logo" className="h-10 w-10 object-contain"/>
-        <span className="ml-2 text-xl font-semibold">Crime Track</span>
+        <span className="ml-2 text-xl font-semibold text-gray-800 dark:text-white">CrimeTrack</span>
       </div>
       <nav className="mt-4 flex-1">
         <ul>
@@ -32,7 +32,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, userRole
                 href="#"
                 onClick={(e) => { e.preventDefault(); setCurrentView(item.view); }}
                 className={`flex items-center p-3 rounded-lg transition-colors duration-200 ${
-                  currentView === item.view ? 'bg-primary text-white' : 'hover:bg-dark-700'
+                  currentView === item.view ? 'bg-primary text-white' : 'hover:bg-gray-100 dark:hover:bg-dark-700'
                 }`}
               >
                 {item.icon}
