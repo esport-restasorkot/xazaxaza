@@ -1,10 +1,7 @@
 
-
-
-
 import React, { useState, useMemo } from 'react';
 import { Report, ReportStatus, StatusDetail, UserRole } from '../types';
-import { FileTextIcon, PrinterIcon } from './icons';
+import { FileTextIcon } from './icons';
 
 // Declare XLSX to be available globally from the script tag in index.html
 declare const XLSX: any;
@@ -244,23 +241,12 @@ const CrimeDataView: React.FC<CrimeDataViewProps> = ({ reports, userRole, operat
         XLSX.writeFile(wb, fileName);
     };
     
-    const handlePrint = () => {
-        window.print();
-    };
-
-    const printTitle = activeTab === 'trend'
-        ? "Tren Kasus 3 Bulan Terakhir"
-        : `Rekapitulasi Data GK ${startDate && endDate ? `(Periode: ${new Date(startDate).toLocaleDateString('id-ID')} - ${new Date(endDate).toLocaleDateString('id-ID')})` : ''}`;
-    
-    const printDate = new Date().toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'short' });
-
     const inputClass = "w-full p-2 border border-gray-300 rounded bg-gray-50 dark:bg-dark-800 dark:border-dark-700 focus:outline-none focus:ring-2 focus:ring-primary";
 
     return (
-        <div className="bg-white dark:bg-dark-900 p-6 rounded-lg shadow-lg printable-container" data-title={printTitle} data-date={printDate}>
-            <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4 no-print">Data Gangguan Kamtibmas (GK)</h1>
+        <div className="bg-white dark:bg-dark-900 p-6 rounded-lg shadow-lg">
             
-            <div className="flex border-b border-gray-200 dark:border-dark-700 mb-6 no-print">
+            <div className="flex border-b border-gray-200 dark:border-dark-700 mb-6">
                 <button
                     onClick={() => setActiveTab('trend')}
                     className={`py-2 px-4 text-sm sm:text-base -mb-px font-semibold transition-colors duration-200 focus:outline-none ${activeTab === 'trend' ? 'border-b-2 border-primary text-primary' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 border-b-2 border-transparent'}`}
@@ -278,11 +264,7 @@ const CrimeDataView: React.FC<CrimeDataViewProps> = ({ reports, userRole, operat
             <div>
                 {activeTab === 'trend' && (
                     <div>
-                        <div className="flex justify-end mb-4 no-print">
-                            <button onClick={handlePrint} className="flex items-center py-2 px-4 rounded bg-gray-600 hover:bg-gray-700 text-white mr-2 whitespace-nowrap">
-                                <PrinterIcon className="h-4 w-4 mr-2" />
-                                Cetak
-                            </button>
+                        <div className="flex justify-end mb-4">
                             <button onClick={handleTrendExport} className="flex items-center py-2 px-4 rounded bg-success text-white hover:bg-green-700 whitespace-nowrap">
                                 <FileTextIcon className="h-4 w-4 mr-2" />
                                 Export Excel
@@ -339,7 +321,7 @@ const CrimeDataView: React.FC<CrimeDataViewProps> = ({ reports, userRole, operat
                 {activeTab === 'summary' && (
                     <div className="space-y-8">
                         <div>
-                             <div className="flex flex-wrap items-center gap-4 p-4 bg-gray-50 dark:bg-dark-700/50 rounded-lg border dark:border-dark-700 no-print">
+                             <div className="flex flex-wrap items-center gap-4 p-4 bg-gray-50 dark:bg-dark-700/50 rounded-lg border dark:border-dark-700">
                                 <div className="flex-grow">
                                     <label htmlFor="start-date" className="block text-sm font-medium mb-1">Tanggal Mulai</label>
                                     <input type="date" id="start-date" value={startDate} onChange={e => setStartDate(e.target.value)} className={inputClass} />
@@ -351,10 +333,6 @@ const CrimeDataView: React.FC<CrimeDataViewProps> = ({ reports, userRole, operat
                                 <div className="self-end flex gap-2">
                                     <button onClick={handleReset} className="py-2 px-4 rounded bg-gray-200 hover:bg-gray-300 dark:bg-dark-800 dark:hover:bg-dark-700 whitespace-nowrap">
                                         Reset
-                                    </button>
-                                     <button onClick={handlePrint} className="flex items-center py-2 px-4 rounded bg-gray-600 hover:bg-gray-700 text-white whitespace-nowrap">
-                                        <PrinterIcon className="h-4 w-4 mr-2" />
-                                        Cetak
                                     </button>
                                      <button onClick={handleSummaryExport} className="flex items-center py-2 px-4 rounded bg-success text-white hover:bg-green-700 whitespace-nowrap">
                                         <FileTextIcon className="h-4 w-4 mr-2" />

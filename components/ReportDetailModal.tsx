@@ -1,7 +1,7 @@
+
 import React from 'react';
 import Modal from './Modal';
 import { Report, Unit, Personnel, ReportType, ReportStatus } from '../types';
-import { PrinterIcon } from './icons';
 
 interface ReportDetailModalProps {
     isOpen: boolean;
@@ -29,18 +29,6 @@ const ReportDetailModal: React.FC<ReportDetailModalProps> = ({ isOpen, onClose, 
         const typePrefix = report.reportType === ReportType.LAPORAN_POLISI ? 'LP' : 'REG';
         const model = report.policeModel ? `/${report.policeModel}` : '';
         return `${typePrefix}${model}/${report.reportNumber}/${report.reportYear}`;
-    };
-
-    const handlePrint = () => {
-        const modalContainer = document.getElementById('modal-content-container');
-        if (!modalContainer) return;
-
-        const printDate = new Date().toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'short' });
-        modalContainer.setAttribute('data-date', printDate);
-        
-        window.print();
-        
-        // Atribut akan tetap ada tetapi tidak akan memengaruhi apa pun di luar @media print
     };
 
     return (
@@ -94,11 +82,7 @@ const ReportDetailModal: React.FC<ReportDetailModalProps> = ({ isOpen, onClose, 
                     </div>
                 )}
 
-                 <div className="flex justify-end pt-4 space-x-2 no-print">
-                    <button type="button" onClick={handlePrint} className="py-2 px-4 rounded bg-gray-600 hover:bg-gray-700 text-white flex items-center">
-                        <PrinterIcon className="h-4 w-4 mr-2"/>
-                        Cetak
-                    </button>
+                 <div className="flex justify-end pt-4 space-x-2">
                     <button type="button" onClick={onClose} className="py-2 px-4 rounded bg-gray-200 hover:bg-gray-300 dark:bg-dark-700 dark:hover:bg-dark-800">Tutup</button>
                 </div>
             </div>

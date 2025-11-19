@@ -165,8 +165,7 @@ const PersonnelView: React.FC<PersonnelViewProps> = ({ personnel, setPersonnel, 
     return (
         <div className="bg-white dark:bg-dark-900 p-6 rounded-lg shadow-lg">
             {notification && <Toast message={notification} onClose={() => setNotification('')} />}
-            <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
-                <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Manajemen Personil</h1>
+            <div className="flex flex-col md:flex-row justify-end items-center mb-4 gap-4">
                 <div className="flex items-center gap-2 w-full md:w-auto">
                     <input
                         type="text"

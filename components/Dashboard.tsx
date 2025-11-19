@@ -246,6 +246,7 @@ const ReportAnalyticsSection: React.FC<ReportAnalyticsSectionProps> = ({ reports
 const Dashboard: React.FC<DashboardProps> = ({ reports, userRole, operatorUnitId, units, personnel }) => {
   const [activeTab, setActiveTab] = useState<'laporanPolisi' | 'pengaduanMasyarakat'>('laporanPolisi');
 
+  // Although unitName is calculated, we're removing the H1 that used it to avoid redundancy with the Header.
   const unitName = useMemo(() => {
     if (userRole === UserRole.OPERATOR && operatorUnitId && units) {
         return units.find(u => u.id === operatorUnitId)?.name;
@@ -278,9 +279,7 @@ const Dashboard: React.FC<DashboardProps> = ({ reports, userRole, operatorUnitId
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100">
-        {unitName ? `Dashboard - ${unitName}` : 'Dashboard Analitik'}
-      </h1>
+      {/* Removed H1 title here as it is now in the Header */}
 
       <div className="border-b border-gray-200 dark:border-dark-700">
         <nav className="-mb-px flex space-x-2 sm:space-x-6" aria-label="Tabs">

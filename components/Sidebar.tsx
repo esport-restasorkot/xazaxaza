@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { HomeIcon, FileTextIcon, UsersIcon, ShieldIcon, BarChartIcon, MotorcycleIcon } from './icons';
 import { UserRole } from '../types';
@@ -19,12 +20,12 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, userRole
   ];
 
   return (
-    <aside className="w-64 bg-white dark:bg-dark-900 text-gray-700 dark:text-gray-200 flex-shrink-0 hidden md:flex md:flex-col">
+    <aside className="w-64 bg-white dark:bg-dark-900 text-gray-700 dark:text-gray-200 flex-shrink-0 hidden md:flex md:flex-col shadow-r">
       <div className="h-16 flex items-center justify-center border-b border-gray-200 dark:border-transparent bg-white dark:bg-dark-950">
         <img src="https://raw.githubusercontent.com/esport-restasorkot/gmbrax/main/reskrim.png" alt="Crime Track Logo" className="h-10 w-10 object-contain"/>
         <span className="ml-2 text-xl font-semibold text-gray-800 dark:text-white">CrimeTrack</span>
       </div>
-      <nav className="mt-4 flex-1">
+      <nav className="mt-4 flex-1 overflow-y-auto">
         <ul>
           {navItems.filter(item => item.roles.includes(userRole)).map(item => (
             <li key={item.name} className="px-4 py-1">
@@ -42,6 +43,11 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, setCurrentView, userRole
           ))}
         </ul>
       </nav>
+      <div className="p-4 border-t border-gray-200 dark:border-dark-700 mt-auto">
+         <p className="text-xs text-center text-gray-500 dark:text-gray-400 font-medium">
+            Satreskrim Polresta Sorong Kota
+         </p>
+      </div>
     </aside>
   );
 };

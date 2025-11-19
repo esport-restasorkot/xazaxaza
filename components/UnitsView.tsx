@@ -60,8 +60,7 @@ const UnitsView: React.FC<UnitsViewProps> = ({ units, setUnits }) => {
     return (
         <div className="bg-white dark:bg-dark-900 p-6 rounded-lg shadow-lg">
             {notification && <Toast message={notification} onClose={() => setNotification('')} />}
-            <div className="flex justify-between items-center mb-4">
-                <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Manajemen Unit</h1>
+            <div className="flex justify-end items-center mb-4">
                 <button onClick={() => openModal()} className="flex items-center bg-primary hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                     <PlusIcon />
                     <span className="ml-2">Tambah Unit</span>

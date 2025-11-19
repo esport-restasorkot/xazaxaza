@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { Report, Unit, Personnel, UserRole, ReportStatus, ReportType, StatusDetail } from '../types';
-import { PlusIcon, EditIcon, ShieldIcon, UserPlusIcon, Edit3Icon, ArrowUpIcon, ArrowDownIcon, SortIcon, EyeIcon, PrinterIcon } from './icons';
+import { PlusIcon, EditIcon, ShieldIcon, UserPlusIcon, Edit3Icon, ArrowUpIcon, ArrowDownIcon, SortIcon, EyeIcon, FileTextIcon } from './icons';
 import Pagination from './Pagination';
 import ReportFormModal from './ReportFormModal';
 import AssignUnitModal from './AssignUnitModal';
@@ -11,6 +11,8 @@ import ReportDetailModal from './ReportDetailModal';
 import Toast from './Toast';
 import { supabase } from '../supabaseClient';
 import ConfirmationModal from './ConfirmationModal';
+
+declare const XLSX: any;
 
 interface ReportsViewProps {
     reports: Report[];
@@ -230,19 +232,48 @@ const ReportsView: React.FC<ReportsViewProps> = ({ reports, setReports, personne
             setReportToDelete(null);
         }
     };
-    
-    const handlePrint = () => {
-        window.print();
+
+    const handleExportExcel = () => {
+        const headers = [
+            'No. Laporan', 'Jenis Laporan', 'Tanggal Laporan', 'Pelapor',
+            'Kasus', 'TKP', 'Kerugian', 'Status', 'Keterangan Status',
+            'Unit', 'Anggota'
+        ];
+
+        const dataRows = processedReports.map(r => [
+            formatReportNumber(r),
+            r.reportType,
+            new Date(r.reportDate).toLocaleDateString('id-ID'),
+            r.reporterName,
+            r.caseType,
+            r.incidentLocation,
+            r.lossAmount,
+            r.status,
+            r.statusDetail || '-',
+            getUnitName(r.assignedUnitId),
+            r.assignedPersonnelIds.map(id => personnel.find(p => p.id === id)?.name || '').join(', ')
+        ]);
+
+        const ws = XLSX.utils.aoa_to_sheet([headers, ...dataRows]);
+        
+        // Auto-size columns (approximate)
+        const wscols = [
+            { wch: 20 }, { wch: 20 }, { wch: 15 }, { wch: 20 },
+            { wch: 20 }, { wch: 30 }, { wch: 15 }, { wch: 10 }, 
+            { wch: 15 }, { wch: 20 }, { wch: 30 }
+        ];
+        ws['!cols'] = wscols;
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Laporan");
+        const fileName = `Laporan_${new Date().toISOString().split('T')[0]}.xlsx`;
+        XLSX.writeFile(wb, fileName);
     };
-
-    const printTitle = `Daftar Laporan (${statusFilter === 'all' ? 'Semua Status' : statusFilter})`;
-    const printDate = new Date().toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'short' });
-
+    
     return (
-        <div className="bg-white dark:bg-dark-900 p-6 rounded-lg shadow-lg printable-container" data-title={printTitle} data-date={printDate}>
+        <div className="bg-white dark:bg-dark-900 p-6 rounded-lg shadow-lg">
             {notification && <Toast message={notification} onClose={() => setNotification('')} />}
-            <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4 no-print">
-                <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Daftar Laporan</h1>
+            <div className="flex flex-col md:flex-row justify-end items-center mb-4 gap-4">
                 <div className="flex items-center gap-2 w-full md:w-auto">
                     <input
                         type="text"
@@ -260,9 +291,9 @@ const ReportsView: React.FC<ReportsViewProps> = ({ reports, setReports, personne
                         <option value={ReportStatus.PROSES}>Proses</option>
                         <option value={ReportStatus.SELESAI}>Selesai</option>
                     </select>
-                    <button onClick={handlePrint} className="flex items-center bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded whitespace-nowrap">
-                        <PrinterIcon className="h-5 w-5"/>
-                        <span className="ml-2 hidden sm:inline">Cetak</span>
+                    <button onClick={handleExportExcel} className="flex items-center bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded whitespace-nowrap">
+                        <FileTextIcon className="w-4 h-4 mr-2" />
+                        <span className="hidden sm:inline">Export Excel</span>
                     </button>
                     {userRole === UserRole.ADMIN && (
                         <button onClick={() => openReportModal()} className="flex items-center bg-primary hover:bg-blue-700 text-white font-bold py-2 px-4 rounded whitespace-nowrap">
@@ -285,7 +316,7 @@ const ReportsView: React.FC<ReportsViewProps> = ({ reports, setReports, personne
                             <SortableHeader label="Ket. Status" sortKey="statusDetail" className="w-1/12"/>
                             <SortableHeader label="Unit" sortKey="assignedUnitId" className="w-2/12"/>
                             <th scope="col" className="px-6 py-3 w-2/12">Anggota</th>
-                            <th scope="col" className="px-6 py-3 text-right no-print">Aksi</th>
+                            <th scope="col" className="px-6 py-3 text-right">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -312,7 +343,7 @@ const ReportsView: React.FC<ReportsViewProps> = ({ reports, setReports, personne
                                         : 'Belum Ditunjuk'
                                     }
                                 </td>
-                                <td className="px-6 py-4 text-right space-x-1 whitespace-nowrap no-print">
+                                <td className="px-6 py-4 text-right space-x-1 whitespace-nowrap">
                                     {/* Common action: View Details */}
                                     <button onClick={() => openDetailModal(report)} className="p-1 text-blue-500 hover:text-blue-700" title="Lihat Detail Laporan"><EyeIcon /></button>
 
@@ -359,7 +390,7 @@ const ReportsView: React.FC<ReportsViewProps> = ({ reports, setReports, personne
                     </tbody>
                 </table>
             </div>
-            <div className="no-print">
+            <div>
                 <Pagination itemsPerPage={itemsPerPage} totalItems={processedReports.length} currentPage={currentPage} paginate={paginate} />
             </div>
             

@@ -9,9 +9,10 @@ interface HeaderProps {
     onLogout: () => void;
     theme: string;
     toggleTheme: () => void;
+    title: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ userRole, operatorUnitName, onLogout, theme, toggleTheme }) => {
+const Header: React.FC<HeaderProps> = ({ userRole, operatorUnitName, onLogout, theme, toggleTheme, title }) => {
     const displayName = userRole === UserRole.OPERATOR && operatorUnitName
         ? `${userRole} - ${operatorUnitName}`
         : userRole;
@@ -19,7 +20,7 @@ const Header: React.FC<HeaderProps> = ({ userRole, operatorUnitName, onLogout, t
     return (
         <header className="bg-white dark:bg-dark-900 shadow-md h-16 flex items-center justify-between px-6 flex-shrink-0">
             <div className="text-gray-800 dark:text-gray-200">
-                <h1 className="text-xl font-semibold">Satreskrim Polresta Sorong Kota</h1>
+                <h1 className="text-xl font-semibold">{title}</h1>
             </div>
             <div className="flex items-center space-x-4">
                  <button 
