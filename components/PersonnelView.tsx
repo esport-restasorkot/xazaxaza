@@ -1,12 +1,13 @@
+
 // components/PersonnelView.tsx
 import React, { useState, useMemo, useEffect } from 'react';
 import { Personnel, Unit } from '../types';
-import { PlusIcon, EditIcon, TrashIcon, UserPlusIcon, SortIcon, ArrowUpIcon, ArrowDownIcon } from './icons';
+import { PlusIcon, EditIcon, SortIcon, ArrowUpIcon, ArrowDownIcon } from './icons';
 import PersonnelFormModal from './PersonnelFormModal';
-import CreateOperatorModal from './CreateOperatorModal';
 import { supabase } from '../supabaseClient';
 import Pagination from './Pagination';
 import Toast from './Toast';
+import ConfirmationModal from './ConfirmationModal';
 
 interface PersonnelViewProps {
     personnel: Personnel[];
@@ -24,14 +25,14 @@ interface SortConfig {
 const PersonnelView: React.FC<PersonnelViewProps> = ({ personnel, setPersonnel, units }) => {
     const [isFormModalOpen, setIsFormModalOpen] = useState(false);
     const [personnelToEdit, setPersonnelToEdit] = useState<Personnel | null>(null);
-    const [isOperatorModalOpen, setIsOperatorModalOpen] = useState(false);
-    const [personnelForOperator, setPersonnelForOperator] = useState<Personnel | null>(null);
     const [notification, setNotification] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [unitFilter, setUnitFilter] = useState('all');
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(15);
     const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
+    const [personnelToDelete, setPersonnelToDelete] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const unitMap = useMemo(() => new Map(units.map(u => [u.id, u.name])), [units]);
 
@@ -96,37 +97,34 @@ const PersonnelView: React.FC<PersonnelViewProps> = ({ personnel, setPersonnel, 
         setIsFormModalOpen(true);
     };
     
-    const openOperatorModal = (p: Personnel) => {
-        setPersonnelForOperator(p);
-        setIsOperatorModalOpen(true);
+    const handleDelete = (personnelId: string) => {
+        setPersonnelToDelete(personnelId);
     };
 
-    const handleDelete = async (personnelId: string) => {
-        if (window.confirm('Apakah Anda yakin ingin menghapus personil ini? Tindakan ini juga akan menghapus akun login terkait secara permanen.')) {
-            try {
-                const { error: invokeError } = await supabase.functions.invoke('delete-personnel', {
-                    body: { personnelId },
-                });
+    const confirmDelete = async () => {
+        if (!personnelToDelete) return;
+        setIsDeleting(true);
+        try {
+            const { error: invokeError } = await supabase.functions.invoke('delete-personnel', {
+                body: { personnelId: personnelToDelete },
+            });
 
-                if (invokeError) {
-                    const errorMessage = invokeError.context?.error || invokeError.message;
-                    throw new Error(errorMessage);
-                }
-                
-                setPersonnel(personnel.filter(p => p.id !== personnelId));
-                setNotification('Data personil berhasil dihapus.');
-
-            } catch (error: any) {
-                alert(`Gagal menghapus personil: ${error.message}`);
+            if (invokeError) {
+                const errorMessage = invokeError.context?.error || invokeError.message;
+                throw new Error(errorMessage);
             }
+            
+            setPersonnel(personnel.filter(p => p.id !== personnelToDelete));
+            setNotification('Data personil berhasil dihapus.');
+
+        } catch (error: any) {
+            alert(`Gagal menghapus personil: ${error.message}`);
+        } finally {
+            setIsDeleting(false);
+            setPersonnelToDelete(null);
         }
     };
     
-    const handleOperatorCreationSuccess = (createdPersonnel: Personnel) => {
-        setPersonnel(prev => prev.map(p => p.id === createdPersonnel.id ? createdPersonnel : p));
-        setNotification(`Akun operator untuk ${createdPersonnel.name} berhasil dibuat.`);
-    };
-
     // Sorting Logic
     const requestSort = (key: SortableKeys) => {
         let direction: SortDirection = 'ascending';
@@ -210,17 +208,7 @@ const PersonnelView: React.FC<PersonnelViewProps> = ({ personnel, setPersonnel, 
                                 <td className="px-6 py-4">{p.rank}</td>
                                 <td className="px-6 py-4">{unitMap.get(p.unitId) || 'Belum Ditunjuk'}</td>
                                 <td className="px-6 py-4 text-right space-x-2">
-                                    {!p.userId && (
-                                        <button 
-                                            onClick={() => openOperatorModal(p)}
-                                            className="p-1 text-blue-500 hover:text-blue-700"
-                                            title="Jadikan Operator"
-                                        >
-                                            <UserPlusIcon />
-                                        </button>
-                                    )}
                                     <button onClick={() => openFormModal(p)} className="p-1 text-yellow-500 hover:text-yellow-700" title="Edit"><EditIcon /></button>
-                                    <button onClick={() => handleDelete(p.id)} className="p-1 text-red-500 hover:text-red-700" title="Hapus"><TrashIcon /></button>
                                 </td>
                             </tr>
                         ))}
@@ -240,13 +228,15 @@ const PersonnelView: React.FC<PersonnelViewProps> = ({ personnel, setPersonnel, 
                     onActionSuccess={setNotification}
                 />
             )}
-            
-            {isOperatorModalOpen && personnelForOperator && (
-                <CreateOperatorModal
-                    isOpen={isOperatorModalOpen}
-                    onClose={() => setIsOperatorModalOpen(false)}
-                    personnel={personnelForOperator}
-                    onSuccess={handleOperatorCreationSuccess}
+
+            {personnelToDelete && (
+                <ConfirmationModal
+                    isOpen={!!personnelToDelete}
+                    onClose={() => setPersonnelToDelete(null)}
+                    onConfirm={confirmDelete}
+                    title="Konfirmasi Hapus Personil"
+                    message="Apakah Anda yakin ingin menghapus personil ini? Tindakan ini juga akan menghapus akun login terkait secara permanen."
+                    isConfirming={isDeleting}
                 />
             )}
         </div>

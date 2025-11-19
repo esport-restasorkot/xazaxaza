@@ -1,9 +1,11 @@
+
 import React, { useState } from 'react';
 import { Unit } from '../types';
-import { PlusIcon, EditIcon, TrashIcon } from './icons';
+import { PlusIcon, EditIcon } from './icons';
 import UnitFormModal from './UnitFormModal';
 import { supabase } from '../supabaseClient';
 import Toast from './Toast';
+import ConfirmationModal from './ConfirmationModal';
 
 interface UnitsViewProps {
     units: Unit[];
@@ -14,6 +16,8 @@ const UnitsView: React.FC<UnitsViewProps> = ({ units, setUnits }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [unitToEdit, setUnitToEdit] = useState<Unit | null>(null);
     const [notification, setNotification] = useState('');
+    const [unitToDelete, setUnitToDelete] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const openModal = (unit: Unit | null = null) => {
         setUnitToEdit(unit);
@@ -25,24 +29,31 @@ const UnitsView: React.FC<UnitsViewProps> = ({ units, setUnits }) => {
         setIsModalOpen(false);
     };
     
-    const handleDelete = async (unitId: string) => {
-        if (window.confirm('Apakah Anda yakin ingin menghapus unit ini?')) {
-            try {
-                const { error: invokeError } = await supabase.functions.invoke('delete-unit', {
-                    body: { unitId },
-                });
+    const handleDelete = (unitId: string) => {
+        setUnitToDelete(unitId);
+    };
 
-                if (invokeError) {
-                    const errorMessage = invokeError.context?.error || invokeError.message;
-                    throw new Error(errorMessage);
-                }
+    const confirmDelete = async () => {
+        if (!unitToDelete) return;
+        setIsDeleting(true);
+        try {
+            const { error: invokeError } = await supabase.functions.invoke('delete-unit', {
+                body: { unitId: unitToDelete },
+            });
 
-                setUnits(units.filter(u => u.id !== unitId));
-                setNotification('Unit berhasil dihapus.');
-
-            } catch (error: any) {
-                alert(error.message); // The error message from the function is user-friendly
+            if (invokeError) {
+                const errorMessage = invokeError.context?.error || invokeError.message;
+                throw new Error(errorMessage);
             }
+
+            setUnits(units.filter(u => u.id !== unitToDelete));
+            setNotification('Unit berhasil dihapus.');
+
+        } catch (error: any) {
+            alert(error.message); // The error message from the function is user-friendly
+        } finally {
+            setIsDeleting(false);
+            setUnitToDelete(null);
         }
     };
 
@@ -70,7 +81,6 @@ const UnitsView: React.FC<UnitsViewProps> = ({ units, setUnits }) => {
                                 <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">{unit.name}</td>
                                 <td className="px-6 py-4 text-right space-x-2">
                                     <button onClick={() => openModal(unit)} className="text-yellow-500 hover:underline"><EditIcon/></button>
-                                    <button onClick={() => handleDelete(unit.id)} className="text-red-500 hover:underline"><TrashIcon/></button>
                                 </td>
                             </tr>
                         ))}
@@ -85,6 +95,17 @@ const UnitsView: React.FC<UnitsViewProps> = ({ units, setUnits }) => {
                     setUnits={setUnits}
                     unitToEdit={unitToEdit}
                     onActionSuccess={setNotification}
+                />
+            )}
+
+            {unitToDelete && (
+                <ConfirmationModal
+                    isOpen={!!unitToDelete}
+                    onClose={() => setUnitToDelete(null)}
+                    onConfirm={confirmDelete}
+                    title="Konfirmasi Hapus Unit"
+                    message="Apakah Anda yakin ingin menghapus unit ini?"
+                    isConfirming={isDeleting}
                 />
             )}
         </div>

@@ -1,3 +1,4 @@
+
 // types.ts
 
 export enum UserRole {
@@ -38,6 +39,7 @@ export enum LocationType {
 export enum ReportStatus {
   PROSES = 'Proses',
   SELESAI = 'Selesai',
+  DIHAPUS = 'Dihapus',
 }
 
 export enum StatusDetail {
@@ -47,6 +49,7 @@ export enum StatusDetail {
   DIVERSI = 'Diversi',
   RJ = 'Restorative Justice',
   SP3 = 'SP3',
+  DIHAPUS = 'Data Dihapus',
 }
 
 export interface Unit {

@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 import { Report, ReportStatus, ReportType, PoliceModel, SPKT, LocationType, StatusDetail, VehicleDetail } from '../types';
 import { DISTRICT_SUBDISTRICT_MAP } from '../constants';
-import { PlusIcon, TrashIcon } from './icons';
+import { PlusIcon, XIcon } from './icons';
 import { supabase } from '../supabaseClient';
 
 interface ReportFormModalProps {
@@ -314,7 +315,7 @@ const ReportFormModal: React.FC<ReportFormModalProps> = ({ isOpen, onClose, setR
                                     <input type="text" value={vehicle.engineNumber} onChange={(e) => handleVehicleChange(index, 'engineNumber', e.target.value)} className={inputClass} required/>
                                 </div>
                                 <button type="button" onClick={() => handleRemoveVehicle(vehicle.id)} className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600">
-                                    <TrashIcon width="12" height="12" />
+                                    <XIcon width="12" height="12" />
                                 </button>
                             </div>
                         ))}

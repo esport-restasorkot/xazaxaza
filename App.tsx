@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 import { Session } from '@supabase/supabase-js';
-import { Report, Unit, Personnel, UserRole } from './types';
+import { Report, Unit, Personnel, UserRole, ReportStatus } from './types';
 import Login from './components/Login';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
@@ -19,7 +20,8 @@ const App: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [currentView, setCurrentView] = useState('dashboard');
-    const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
+    // Change default theme from 'dark' to 'light'
+    const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
 
     const [reports, setReports] = useState<Report[]>([]);
     const [units, setUnits] = useState<Unit[]>([]);
@@ -158,7 +160,13 @@ const App: React.FC = () => {
                         statusDetail: r.status_detail,
                         assignedUnitId: r.assigned_unit_id,
                         assignedPersonnelIds: (assignments || []).map((a: any) => a.personnel_id),
-                        stolenVehicles: r.stolen_vehicles || [],
+                        // Map snake_case from DB to camelCase for frontend use
+                        stolenVehicles: (r.stolen_vehicles || []).map((v: any) => ({
+                            id: v.id,
+                            vehicleType: v.vehicle_type,
+                            frameNumber: v.frame_number,
+                            engineNumber: v.engine_number
+                        })),
                         statusHistory: (r.status_history || []).map((h: any) => ({
                             status: h.status,
                             statusDetail: h.status_detail,
@@ -170,7 +178,9 @@ const App: React.FC = () => {
                 })
             );
 
-            setReports(reportsWithAssignments);
+            // Filter out soft-deleted reports so they don't appear in the app
+            const activeReports = reportsWithAssignments.filter((r: any) => r.status !== ReportStatus.DIHAPUS);
+            setReports(activeReports);
             
         } catch (error: any) {
             console.error("Error fetching data:", error);

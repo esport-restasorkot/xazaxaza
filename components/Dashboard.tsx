@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState } from 'react';
 import { FileTextIcon, MotorcycleIcon } from './icons';
 import { UserRole, Unit, Report, ReportType, ReportStatus, Personnel, StatusDetail } from '../types';
@@ -123,9 +124,8 @@ const ReportAnalyticsSection: React.FC<ReportAnalyticsSectionProps> = ({ reports
         }, {} as { [key: string]: number });
 
         return Object.entries(caseCounts)
-          // FIX: The `as number` casts are redundant if type inference is correct, and may cause issues.
-          // The values in `caseCounts` are numbers, so `b[1]` and `a[1]` are numbers.
-          .sort((a, b) => b[1] - a[1])
+          // FIX: The values from Object.entries are not strongly typed as numbers, so they must be cast for the arithmetic sort operation.
+          .sort((a, b) => (b[1] as number) - (a[1] as number))
           .slice(0, 7)
           .map(([name, count]) => ({ name, count }));
     }, [reports]);
@@ -174,7 +174,8 @@ const ReportAnalyticsSection: React.FC<ReportAnalyticsSectionProps> = ({ reports
         return Object.entries(unitCounts)
             .map(([unitId, count]) => ({ name: unitMap.get(unitId) || 'Unit Tidak Dikenal', count }))
             .filter(u => u.name !== 'Unit Tidak Dikenal')
-            .sort((a, b) => b.count - a.count)
+            // FIX: The count property is not strongly typed as a number, so it must be cast for the arithmetic sort operation.
+            .sort((a, b) => (b.count as number) - (a.count as number))
             .slice(0, 5);
     }, [reports, units, userRole]);
 
@@ -200,7 +201,8 @@ const ReportAnalyticsSection: React.FC<ReportAnalyticsSectionProps> = ({ reports
                 return { name, count };
             })
             .filter(p => p.name !== 'Personil Tidak Dikenal' && p.count > 0)
-            .sort((a, b) => b.count - a.count)
+            // FIX: The count property is not strongly typed as a number, so it must be cast for the arithmetic sort operation.
+            .sort((a, b) => (b.count as number) - (a.count as number))
             .slice(0, 5);
 
     }, [reports, personnel, userRole]);

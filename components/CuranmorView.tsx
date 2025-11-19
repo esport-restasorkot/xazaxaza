@@ -1,6 +1,7 @@
+
 import React, { useState, useMemo } from 'react';
 import { StolenVehicle, Report, ReportType, UserRole } from '../types';
-import { PlusIcon, EditIcon, TrashIcon } from './icons';
+import { PlusIcon, EditIcon } from './icons';
 import CuranmorFormModal from './CuranmorFormModal';
 import Pagination from './Pagination';
 
@@ -79,9 +80,6 @@ const CuranmorView: React.FC<CuranmorViewProps> = ({ stolenVehicles, setStolenVe
                                     <td className="px-6 py-4">{vehicle.engineNumber}</td>
                                     <td className="px-6 py-4 text-right space-x-2">
                                         <button onClick={() => openModal(vehicle)} className="p-1 text-yellow-500 hover:text-yellow-700" title="Edit Data"><EditIcon /></button>
-                                        {userRole === UserRole.ADMIN && (
-                                            <button onClick={() => handleDelete(vehicle.id)} className="p-1 text-red-500 hover:text-red-700" title="Hapus Data"><TrashIcon /></button>
-                                        )}
                                     </td>
                                 </tr>
                             );

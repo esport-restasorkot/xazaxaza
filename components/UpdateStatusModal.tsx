@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 import { Report, ReportStatus, StatusUpdate, UserRole, StatusDetail } from '../types';
@@ -15,6 +16,7 @@ interface UpdateStatusModalProps {
 const statusDetailOptions = {
     [ReportStatus.PROSES]: [StatusDetail.LIDIK, StatusDetail.SIDIK],
     [ReportStatus.SELESAI]: [StatusDetail.P21, StatusDetail.DIVERSI, StatusDetail.RJ, StatusDetail.SP3],
+    [ReportStatus.DIHAPUS]: [StatusDetail.DIHAPUS],
 };
 
 const UpdateStatusModal: React.FC<UpdateStatusModalProps> = ({ isOpen, onClose, report, setReports, userRole, onUpdateSuccess }) => {

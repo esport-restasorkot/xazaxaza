@@ -20,64 +20,61 @@ const Login: React.FC = () => {
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-dark-800">
-            <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-lg dark:bg-dark-900">
-                <div className="text-center">
-                    <div className="flex justify-center mb-4">
-                         <img src="https://raw.githubusercontent.com/esport-restasorkot/gmbrax/main/reskrim.png" alt="Crime Track Logo" className="h-16 w-16 object-contain"/>
-                    </div>
-                    <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Login ke Crime Track</h1>
-                    <p className="mt-2 text-gray-600 dark:text-gray-400">Silakan masukkan kredensial Anda.</p>
-                </div>
-                <form className="mt-8 space-y-6" onSubmit={handleLogin}>
-                    <div className="rounded-md shadow-sm -space-y-px">
-                        <div>
-                            <label htmlFor="email-address" className="sr-only">Alamat Email</label>
-                            <input
-                                id="email-address"
-                                name="email"
-                                type="email"
-                                autoComplete="email"
-                                required
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm dark:bg-dark-800 dark:border-dark-700 dark:text-gray-200"
-                                placeholder="Alamat Email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="password" className="sr-only">Kata Sandi</label>
-                            <input
-                                id="password"
-                                name="password"
-                                type="password"
-                                autoComplete="current-password"
-                                required
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm dark:bg-dark-800 dark:border-dark-700 dark:text-gray-200"
-                                placeholder="Kata Sandi"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                            />
-                        </div>
-                    </div>
-
-                    {error && (
-                        <div className="p-3 text-sm text-red-700 bg-red-100 rounded-md dark:bg-red-900/20 dark:text-red-400">
-                            {error}
-                        </div>
-                    )}
-
-                    <div>
-                        <button
-                            type="submit"
-                            className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-60"
-                            disabled={loading}
-                        >
-                            {loading ? 'Memproses...' : 'Login'}
-                        </button>
-                    </div>
-                </form>
+        <div className="min-h-screen flex flex-col items-center justify-center bg-[#121212] relative overflow-hidden w-full p-4">
+          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary via-transparent to-danger opacity-10"></div>
+          
+          <div className="relative z-10 w-full max-w-sm rounded-3xl bg-gradient-to-b from-[#ffffff10] to-[#ffffff05] backdrop-blur-xl border border-white/10 shadow-2xl p-8 flex flex-col items-center">
+            
+            <div className="flex items-center justify-center w-16 h-16 rounded-full bg-white/20 mb-6 shadow-lg">
+              <img src="https://raw.githubusercontent.com/esport-restasorkot/gmbrax/main/reskrim.png" alt="Crime Track Logo" className="h-10 w-10 object-contain"/>
             </div>
+            
+            <h2 className="text-2xl font-semibold text-white mb-2 text-center">
+              CrimeTrack
+            </h2>
+             <p className="text-sm text-gray-400 mb-6">Satreskrim Polresta Sorong Kota</p>
+
+            <form className="flex flex-col w-full gap-4" onSubmit={handleLogin}>
+              <div className="w-full flex flex-col gap-3">
+                <input
+                  placeholder="Email"
+                  type="email"
+                  value={email}
+                  className="w-full px-5 py-3 rounded-xl bg-white/10 text-white placeholder-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition"
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+                <input
+                  placeholder="Password"
+                  type="password"
+                  value={password}
+                  className="w-full px-5 py-3 rounded-xl bg-white/10 text-white placeholder-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition"
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+                {error && (
+                  <div className="text-sm text-red-400 text-left px-2">{error}</div>
+                )}
+              </div>
+             
+              <div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-primary text-white font-medium px-5 py-3 rounded-full shadow-lg hover:bg-blue-600 transition text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? 'Memproses...' : 'Login'}
+                </button>
+              </div>
+            </form>
+          </div>
+          
+          <div className="relative z-10 mt-12 flex flex-col items-center text-center">
+            <p className="text-gray-400 text-sm mb-2">
+              Platform interinal untuk manajemen pelaporan kasus.
+            </p>
+            
+          </div>
         </div>
     );
 };

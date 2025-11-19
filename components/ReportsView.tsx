@@ -1,6 +1,7 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
-import { Report, Unit, Personnel, UserRole, ReportStatus, ReportType } from '../types';
-import { PlusIcon, EditIcon, TrashIcon, ShieldIcon, UserPlusIcon, Edit3Icon, ArrowUpIcon, ArrowDownIcon, SortIcon, EyeIcon, PrinterIcon } from './icons';
+import { Report, Unit, Personnel, UserRole, ReportStatus, ReportType, StatusDetail } from '../types';
+import { PlusIcon, EditIcon, ShieldIcon, UserPlusIcon, Edit3Icon, ArrowUpIcon, ArrowDownIcon, SortIcon, EyeIcon, PrinterIcon } from './icons';
 import Pagination from './Pagination';
 import ReportFormModal from './ReportFormModal';
 import AssignUnitModal from './AssignUnitModal';
@@ -9,6 +10,7 @@ import UpdateStatusModal from './UpdateStatusModal';
 import ReportDetailModal from './ReportDetailModal';
 import Toast from './Toast';
 import { supabase } from '../supabaseClient';
+import ConfirmationModal from './ConfirmationModal';
 
 interface ReportsViewProps {
     reports: Report[];
@@ -45,6 +47,8 @@ const ReportsView: React.FC<ReportsViewProps> = ({ reports, setReports, personne
     const [isUpdateStatusModalOpen, setIsUpdateStatusModalOpen] = useState(false);
     const [reportToUpdateStatus, setReportToUpdateStatus] = useState<Report | null>(null);
     const [reportToView, setReportToView] = useState<Report | null>(null);
+    const [reportToDelete, setReportToDelete] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const getUnitName = (unitId?: string) => units.find(u => u.id === unitId)?.name || 'Belum Ditunjuk';
     
@@ -65,6 +69,9 @@ const ReportsView: React.FC<ReportsViewProps> = ({ reports, setReports, personne
 
         if (statusFilter !== 'all') {
             reportsToFilter = reportsToFilter.filter(r => r.status === statusFilter);
+        } else {
+            // If filtering 'all', we should exclude 'Dihapus' status so they don't show up
+            reportsToFilter = reportsToFilter.filter(r => r.status !== ReportStatus.DIHAPUS);
         }
 
         if (searchTerm) {
@@ -182,25 +189,45 @@ const ReportsView: React.FC<ReportsViewProps> = ({ reports, setReports, personne
         setReportToView(report);
     };
 
-    const handleDelete = async (reportId: string) => {
-        if (window.confirm('Apakah Anda yakin ingin menghapus laporan ini? Aksi ini tidak dapat dibatalkan dan akan menghapus semua data terkait.')) {
-            try {
-                const { error: invokeError } = await supabase.functions.invoke('delete-report', {
-                    body: { reportId },
-                });
+    const handleDelete = (reportId: string) => {
+        setReportToDelete(reportId);
+    };
     
-                if (invokeError) {
-                    const errorMessage = invokeError.context?.error || invokeError.message;
-                    throw new Error(errorMessage);
-                }
+    const confirmDelete = async () => {
+        if (!reportToDelete) return;
+        setIsDeleting(true);
+        try {
+             // Fallback / Replacement: Soft Delete using Client Side Update
+             // This replaces the Edge Function call that was failing.
+            const { error: updateError } = await supabase
+                .from('reports')
+                .update({ 
+                    status: ReportStatus.DIHAPUS, 
+                    status_detail: StatusDetail.DIHAPUS 
+                })
+                .eq('id', reportToDelete);
+
+            if (updateError) throw updateError;
+            
+            // Optional: Add to history
+            await supabase.from('status_history').insert({
+                report_id: reportToDelete,
+                status: ReportStatus.DIHAPUS,
+                status_detail: StatusDetail.DIHAPUS,
+                description: 'Laporan dihapus (Soft Delete)',
+                updated_by: userRole
+            });
+
+            // Update UI by removing the deleted item from the local state
+            setReports(reports.filter(r => r.id !== reportToDelete));
+            setNotification('Laporan berhasil dihapus.');
     
-                setReports(reports.filter(r => r.id !== reportId));
-                setNotification('Laporan berhasil dihapus.');
-    
-            } catch (error: any) {
-                console.error("Delete operation failed:", error);
-                alert(`Gagal menghapus laporan: ${error.message}`);
-            }
+        } catch (error: any) {
+            console.error("Delete operation failed:", error);
+            alert(`Gagal menghapus laporan: ${error.message}`);
+        } finally {
+            setIsDeleting(false);
+            setReportToDelete(null);
         }
     };
     
@@ -304,7 +331,6 @@ const ReportsView: React.FC<ReportsViewProps> = ({ reports, setReports, personne
                                             )}
                                             
                                             <button onClick={() => openReportModal(report)} className="p-1 text-yellow-500 hover:text-yellow-700" title="Edit Laporan"><EditIcon /></button>
-                                            <button onClick={() => handleDelete(report.id)} className="p-1 text-red-500 hover:text-red-700" title="Hapus"><TrashIcon /></button>
                                         </>
                                     )}
 
@@ -348,6 +374,16 @@ const ReportsView: React.FC<ReportsViewProps> = ({ reports, setReports, personne
                     report={reportToView}
                     units={units}
                     personnel={personnel}
+                />
+            )}
+            {reportToDelete && (
+                <ConfirmationModal
+                    isOpen={!!reportToDelete}
+                    onClose={() => setReportToDelete(null)}
+                    onConfirm={confirmDelete}
+                    title="Konfirmasi Hapus Laporan"
+                    message="Apakah Anda yakin ingin menghapus laporan ini? Laporan akan ditandai sebagai dihapus."
+                    isConfirming={isDeleting}
                 />
             )}
         </div>
