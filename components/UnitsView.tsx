@@ -3,9 +3,7 @@ import React, { useState } from 'react';
 import { Unit } from '../types';
 import { PlusIcon, EditIcon } from './icons';
 import UnitFormModal from './UnitFormModal';
-import { supabase } from '../supabaseClient';
 import Toast from './Toast';
-import ConfirmationModal from './ConfirmationModal';
 
 interface UnitsViewProps {
     units: Unit[];
@@ -16,8 +14,6 @@ const UnitsView: React.FC<UnitsViewProps> = ({ units, setUnits }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [unitToEdit, setUnitToEdit] = useState<Unit | null>(null);
     const [notification, setNotification] = useState('');
-    const [unitToDelete, setUnitToDelete] = useState<string | null>(null);
-    const [isDeleting, setIsDeleting] = useState(false);
 
     const openModal = (unit: Unit | null = null) => {
         setUnitToEdit(unit);
@@ -27,34 +23,6 @@ const UnitsView: React.FC<UnitsViewProps> = ({ units, setUnits }) => {
     const closeModal = () => {
         setUnitToEdit(null);
         setIsModalOpen(false);
-    };
-    
-    const handleDelete = (unitId: string) => {
-        setUnitToDelete(unitId);
-    };
-
-    const confirmDelete = async () => {
-        if (!unitToDelete) return;
-        setIsDeleting(true);
-        try {
-            const { error: invokeError } = await supabase.functions.invoke('delete-unit', {
-                body: { unitId: unitToDelete },
-            });
-
-            if (invokeError) {
-                const errorMessage = invokeError.context?.error || invokeError.message;
-                throw new Error(errorMessage);
-            }
-
-            setUnits(units.filter(u => u.id !== unitToDelete));
-            setNotification('Unit berhasil dihapus.');
-
-        } catch (error: any) {
-            alert(error.message); // The error message from the function is user-friendly
-        } finally {
-            setIsDeleting(false);
-            setUnitToDelete(null);
-        }
     };
 
     return (
@@ -94,17 +62,6 @@ const UnitsView: React.FC<UnitsViewProps> = ({ units, setUnits }) => {
                     setUnits={setUnits}
                     unitToEdit={unitToEdit}
                     onActionSuccess={setNotification}
-                />
-            )}
-
-            {unitToDelete && (
-                <ConfirmationModal
-                    isOpen={!!unitToDelete}
-                    onClose={() => setUnitToDelete(null)}
-                    onConfirm={confirmDelete}
-                    title="Konfirmasi Hapus Unit"
-                    message="Apakah Anda yakin ingin menghapus unit ini?"
-                    isConfirming={isDeleting}
                 />
             )}
         </div>

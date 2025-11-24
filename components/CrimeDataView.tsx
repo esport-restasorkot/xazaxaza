@@ -3,7 +3,6 @@ import React, { useState, useMemo } from 'react';
 import { Report, ReportStatus, StatusDetail, UserRole } from '../types';
 import { FileTextIcon } from './icons';
 
-// Declare XLSX to be available globally from the script tag in index.html
 declare const XLSX: any;
 
 interface CrimeDataViewProps {
@@ -49,7 +48,7 @@ const CrimeDataView: React.FC<CrimeDataViewProps> = ({ reports, userRole, operat
             return reportsForView;
         }
         const start = new Date(startDate).getTime();
-        const end = new Date(endDate).getTime() + 86400000; // Include the whole end day
+        const end = new Date(endDate).getTime() + 86400000;
 
         return reportsForView.filter(report => {
             const reportDate = new Date(report.reportDate).getTime();
@@ -58,7 +57,6 @@ const CrimeDataView: React.FC<CrimeDataViewProps> = ({ reports, userRole, operat
     }, [reportsForView, startDate, endDate]);
 
     const crimeData = useMemo<CrimeDataSummary>(() => {
-        // FIX: Replaced `reduce` with a `for...of` loop to fix type inference issues.
         const data: CrimeDataSummary = {};
         for (const report of filteredReports) {
             const { caseType, status, statusDetail } = report;
@@ -82,8 +80,6 @@ const CrimeDataView: React.FC<CrimeDataViewProps> = ({ reports, userRole, operat
     const totals = useMemo<CrimeSummaryItem>(() => {
         const initialTotals: CrimeSummaryItem = { total: 0, selesai: 0, lidik: 0, sidik: 0, p21: 0, diversi: 0, rj: 0, sp3: 0 };
         
-        // FIX: Replaced reduce with a for...of loop for robustness against type inference issues.
-        // FIX: Add type assertion to fix '... does not exist on type unknown' errors.
         for (const data of Object.values(crimeData) as CrimeSummaryItem[]) {
             initialTotals.total += data.total;
             initialTotals.selesai += data.selesai;
@@ -103,7 +99,6 @@ const CrimeDataView: React.FC<CrimeDataViewProps> = ({ reports, userRole, operat
         const monthLabels: string[] = [];
         const monthStartDates: Date[] = [];
 
-        // Get labels and start dates for the last 3 months
         for (let i = 2; i >= 0; i--) {
             const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
             monthLabels.push(date.toLocaleString('id-ID', { month: 'long' }));
@@ -116,7 +111,6 @@ const CrimeDataView: React.FC<CrimeDataViewProps> = ({ reports, userRole, operat
             const reportDate = new Date(report.reportDate);
             let monthIndex = -1;
             
-            // Determine which month the report belongs to, starting from the most recent
             if (reportDate >= monthStartDates[2]) {
                 monthIndex = 2;
             } else if (reportDate >= monthStartDates[1]) {
@@ -128,7 +122,6 @@ const CrimeDataView: React.FC<CrimeDataViewProps> = ({ reports, userRole, operat
             if (monthIndex > -1) {
                 const { caseType, status } = report;
                 if (!data[caseType]) {
-                    // Initialize array for 3 months
                     data[caseType] = Array(3).fill(null).map(() => ({ total: 0, selesai: 0 }));
                 }
 
@@ -139,7 +132,6 @@ const CrimeDataView: React.FC<CrimeDataViewProps> = ({ reports, userRole, operat
             }
         });
         
-        // FIX: Replaced `reduce` with a loop to fix type inference issues when creating the filtered data object.
         const filteredData: TrendData['data'] = {};
         Object.entries(data)
             .filter(([, values]) => values.some(v => v.total > 0))
@@ -162,7 +154,6 @@ const CrimeDataView: React.FC<CrimeDataViewProps> = ({ reports, userRole, operat
         const headers = ['Kasus', 'Total', 'Selesai', 'Lidik', 'Sidik', 'P21', 'Diversi', 'RJ', 'SP3'];
     
         const dataRows = Object.entries(crimeData).map(([caseType, dataValue]) => {
-            // FIX: Add type assertion to fix '... does not exist on type unknown' errors.
             const data = dataValue as CrimeSummaryItem;
             return [
                 caseType, data.total, data.selesai, data.lidik, data.sidik,
@@ -198,19 +189,14 @@ const CrimeDataView: React.FC<CrimeDataViewProps> = ({ reports, userRole, operat
     const handleTrendExport = () => {
         const title = [`Tren Kasus 3 Bulan Terakhir`];
         
-        // FIX: Replaced flatMap with reduce for wider JS engine compatibility.
-        // FIX: Add type assertion to fix '... does not exist on type unknown' errors.
         const headers = ['Kasus', ...(trendData as TrendData).monthLabels.reduce<string[]>((acc, label) => acc.concat([`${label} Total`, `${label} Selesai`]), [])];
 
-        // FIX: Add type assertion to fix '... does not exist on type unknown' errors.
         const dataRows = Object.entries((trendData as TrendData).data).map(([caseType, monthlyData]) => [
             caseType,
-            // FIX: Replaced flatMap with reduce for wider JS engine compatibility.
             ...monthlyData.reduce<number[]>((acc, d) => acc.concat([d.total, d.selesai]), [])
         ]);
 
         const monthTotals = Array(3).fill(null).map(() => ({ total: 0, selesai: 0 }));
-        // FIX: Add type assertion to fix '... does not exist on type unknown' errors.
         Object.values((trendData as TrendData).data).forEach(monthlyData => {
             monthlyData.forEach((data, index) => {
                 monthTotals[index].total += data.total;
@@ -220,7 +206,6 @@ const CrimeDataView: React.FC<CrimeDataViewProps> = ({ reports, userRole, operat
         
         const totalRow = [
             'Total',
-            // FIX: Replaced flatMap with reduce for wider JS engine compatibility.
             ...monthTotals.reduce<number[]>((acc, t) => acc.concat([t.total, t.selesai]), [])
         ];
     
@@ -229,8 +214,6 @@ const CrimeDataView: React.FC<CrimeDataViewProps> = ({ reports, userRole, operat
         const ws = XLSX.utils.aoa_to_sheet(finalData);
         ws['!cols'] = [
             { wch: 30 }, 
-            // FIX: Replaced flatMap with reduce for wider JS engine compatibility.
-            // FIX: Add type assertion to fix '... does not exist on type unknown' errors.
             ...(trendData as TrendData).monthLabels.reduce<{wch: number}[]>((acc) => acc.concat([{ wch: 15 }, { wch: 15 }]), [])
         ];
     
@@ -275,15 +258,11 @@ const CrimeDataView: React.FC<CrimeDataViewProps> = ({ reports, userRole, operat
                                 <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-dark-700 dark:text-gray-400 align-middle">
                                     <tr>
                                         <th scope="col" className="px-6 py-3" rowSpan={2}>Kasus</th>
-                                        {/* FIX: Add type assertion to fix '... does not exist on type unknown' errors. */}
                                         {(trendData as TrendData).monthLabels.map(label => (
                                             <th key={label} scope="col" colSpan={2} className="px-6 py-3 text-center border-x dark:border-dark-800">{label}</th>
                                         ))}
                                     </tr>
                                      <tr>
-                                        {/* FIX: Replaced flatMap with reduce for wider JS engine compatibility. */}
-                                        {/* FIX: Replaced JSX.Element[] with React.ReactNode[] to fix namespace error. */}
-                                        {/* FIX: Add type assertion to fix '... does not exist on type unknown' errors. */}
                                         {(trendData as TrendData).monthLabels.reduce<React.ReactNode[]>((acc, label) => acc.concat([
                                             <th key={`${label}-total`} scope="col" className="px-3 py-3 text-center bg-gray-100 dark:bg-dark-700/50 border-l dark:border-dark-800">Total</th>,
                                             <th key={`${label}-selesai`} scope="col" className="px-3 py-3 text-center bg-gray-100 dark:bg-dark-700/50 border-r dark:border-dark-800">Selesai</th>
@@ -291,22 +270,17 @@ const CrimeDataView: React.FC<CrimeDataViewProps> = ({ reports, userRole, operat
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {/* FIX: Add type assertion to fix '... does not exist on type unknown' errors. */}
                                     {Object.entries((trendData as TrendData).data).map(([caseType, monthlyData]) => (
                                         <tr key={caseType} className="bg-white border-b dark:bg-dark-900 dark:border-dark-700 hover:bg-gray-50 dark:hover:bg-dark-800">
                                             <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">{caseType}</td>
-                                            {/* FIX: Replaced flatMap with reduce for wider JS engine compatibility. */}
-                                            {/* FIX: Replaced JSX.Element[] with React.ReactNode[] to fix namespace error. */}
                                             {monthlyData.reduce<React.ReactNode[]>((acc, data, index) => acc.concat([
                                                 <td key={`${index}-total`} className="px-3 py-4 text-center border-l dark:border-dark-800">{data.total}</td>,
                                                 <td key={`${index}-selesai`} className="px-3 py-4 text-center border-r dark:border-dark-800">{data.selesai}</td>
                                             ]), [])}
                                         </tr>
                                     ))}
-                                    {/* FIX: Add type assertion to fix '... does not exist on type unknown' errors. */}
                                     {Object.keys((trendData as TrendData).data).length === 0 && (
                                     <tr className="bg-white border-b dark:bg-dark-900 dark:border-dark-700">
-                                            {/* FIX: Add type assertion to fix '... does not exist on type unknown' errors. */}
                                             <td colSpan={1 + (trendData as TrendData).monthLabels.length * 2} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
                                                 Tidak ada data tren untuk 3 bulan terakhir.
                                             </td>
@@ -362,7 +336,6 @@ const CrimeDataView: React.FC<CrimeDataViewProps> = ({ reports, userRole, operat
                                         {Object.entries(crimeData).map(([caseType, data]) => (
                                             <tr key={caseType} className="bg-white border-b dark:bg-dark-900 dark:border-dark-700 hover:bg-gray-50 dark:hover:bg-dark-800">
                                                 <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">{caseType}</td>
-                                                {/* FIX: Add type assertion to fix '... does not exist on type unknown' errors. */}
                                                 <td className="px-6 py-4 text-center">{(data as CrimeSummaryItem).total}</td>
                                                 <td className="px-6 py-4 text-center">{(data as CrimeSummaryItem).selesai}</td>
                                                 <td className="px-6 py-4 text-center">{(data as CrimeSummaryItem).lidik}</td>

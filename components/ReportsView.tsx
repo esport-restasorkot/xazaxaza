@@ -9,8 +9,6 @@ import AssignPersonnelModal from './AssignPersonnelModal';
 import UpdateStatusModal from './UpdateStatusModal';
 import ReportDetailModal from './ReportDetailModal';
 import Toast from './Toast';
-import { supabase } from '../supabaseClient';
-import ConfirmationModal from './ConfirmationModal';
 
 declare const XLSX: any;
 
@@ -49,8 +47,6 @@ const ReportsView: React.FC<ReportsViewProps> = ({ reports, setReports, personne
     const [isUpdateStatusModalOpen, setIsUpdateStatusModalOpen] = useState(false);
     const [reportToUpdateStatus, setReportToUpdateStatus] = useState<Report | null>(null);
     const [reportToView, setReportToView] = useState<Report | null>(null);
-    const [reportToDelete, setReportToDelete] = useState<string | null>(null);
-    const [isDeleting, setIsDeleting] = useState(false);
 
     const getUnitName = (unitId?: string) => units.find(u => u.id === unitId)?.name || 'Belum Ditunjuk';
     
@@ -72,7 +68,6 @@ const ReportsView: React.FC<ReportsViewProps> = ({ reports, setReports, personne
         if (statusFilter !== 'all') {
             reportsToFilter = reportsToFilter.filter(r => r.status === statusFilter);
         } else {
-            // If filtering 'all', we should exclude 'Dihapus' status so they don't show up
             reportsToFilter = reportsToFilter.filter(r => r.status !== ReportStatus.DIHAPUS);
         }
 
@@ -118,7 +113,6 @@ const ReportsView: React.FC<ReportsViewProps> = ({ reports, setReports, personne
                 return 0;
             });
         } else {
-            // Default sort
             reportsToFilter.sort((a, b) => new Date(b.reportDate).getTime() - new Date(a.reportDate).getTime());
         }
 
@@ -160,13 +154,11 @@ const ReportsView: React.FC<ReportsViewProps> = ({ reports, setReports, personne
         </th>
     );
 
-    // Pagination Logic
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
     const currentItems = processedReports.slice(indexOfFirstItem, indexOfLastItem);
     const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
-    // Modal Handlers
     const openReportModal = (report: Report | null = null) => {
         setReportToEdit(report);
         setIsReportModalOpen(true);
@@ -189,48 +181,6 @@ const ReportsView: React.FC<ReportsViewProps> = ({ reports, setReports, personne
 
     const openDetailModal = (report: Report) => {
         setReportToView(report);
-    };
-
-    const handleDelete = (reportId: string) => {
-        setReportToDelete(reportId);
-    };
-    
-    const confirmDelete = async () => {
-        if (!reportToDelete) return;
-        setIsDeleting(true);
-        try {
-             // Fallback / Replacement: Soft Delete using Client Side Update
-             // This replaces the Edge Function call that was failing.
-            const { error: updateError } = await supabase
-                .from('reports')
-                .update({ 
-                    status: ReportStatus.DIHAPUS, 
-                    status_detail: StatusDetail.DIHAPUS 
-                })
-                .eq('id', reportToDelete);
-
-            if (updateError) throw updateError;
-            
-            // Optional: Add to history
-            await supabase.from('status_history').insert({
-                report_id: reportToDelete,
-                status: ReportStatus.DIHAPUS,
-                status_detail: StatusDetail.DIHAPUS,
-                description: 'Laporan dihapus (Soft Delete)',
-                updated_by: userRole
-            });
-
-            // Update UI by removing the deleted item from the local state
-            setReports(reports.filter(r => r.id !== reportToDelete));
-            setNotification('Laporan berhasil dihapus.');
-    
-        } catch (error: any) {
-            console.error("Delete operation failed:", error);
-            alert(`Gagal menghapus laporan: ${error.message}`);
-        } finally {
-            setIsDeleting(false);
-            setReportToDelete(null);
-        }
     };
 
     const handleExportExcel = () => {
@@ -256,7 +206,6 @@ const ReportsView: React.FC<ReportsViewProps> = ({ reports, setReports, personne
 
         const ws = XLSX.utils.aoa_to_sheet([headers, ...dataRows]);
         
-        // Auto-size columns (approximate)
         const wscols = [
             { wch: 20 }, { wch: 20 }, { wch: 15 }, { wch: 20 },
             { wch: 20 }, { wch: 30 }, { wch: 15 }, { wch: 10 }, 
@@ -344,13 +293,10 @@ const ReportsView: React.FC<ReportsViewProps> = ({ reports, setReports, personne
                                     }
                                 </td>
                                 <td className="px-6 py-4 text-right space-x-1 whitespace-nowrap">
-                                    {/* Common action: View Details */}
                                     <button onClick={() => openDetailModal(report)} className="p-1 text-blue-500 hover:text-blue-700" title="Lihat Detail Laporan"><EyeIcon /></button>
 
-                                    {/* Admin-only Actions */}
                                     {userRole === UserRole.ADMIN && (
                                         <>
-                                            {/* Conditional "Tunjuk Unit" button */}
                                             {!report.assignedUnitId ? (
                                                 <button onClick={() => openAssignUnitModal(report)} className="p-1 text-white bg-indigo-500 rounded hover:bg-indigo-600 animate-pulse" title="Tunjuk Unit">
                                                     <ShieldIcon width="16" height="16"/>
@@ -365,12 +311,10 @@ const ReportsView: React.FC<ReportsViewProps> = ({ reports, setReports, personne
                                         </>
                                     )}
 
-                                    {/* Operator-only Actions */}
                                     {userRole === UserRole.OPERATOR && (
                                         <>
                                             <button onClick={() => openUpdateStatusModal(report)} className="p-1 text-green-500 hover:text-green-700" title="Update Status"><Edit3Icon /></button>
                                             
-                                            {/* Operator can assign personnel if a unit is assigned */}
                                             {report.assignedUnitId && ( 
                                                 report.assignedPersonnelIds.length === 0 ? (
                                                     <button onClick={() => openAssignPersonnelModal(report)} className="p-1 text-white bg-purple-500 rounded hover:bg-purple-600 animate-pulse" title="Tunjuk Personil">
@@ -405,16 +349,6 @@ const ReportsView: React.FC<ReportsViewProps> = ({ reports, setReports, personne
                     report={reportToView}
                     units={units}
                     personnel={personnel}
-                />
-            )}
-            {reportToDelete && (
-                <ConfirmationModal
-                    isOpen={!!reportToDelete}
-                    onClose={() => setReportToDelete(null)}
-                    onConfirm={confirmDelete}
-                    title="Konfirmasi Hapus Laporan"
-                    message="Apakah Anda yakin ingin menghapus laporan ini? Laporan akan ditandai sebagai dihapus."
-                    isConfirming={isDeleting}
                 />
             )}
         </div>

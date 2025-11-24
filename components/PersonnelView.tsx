@@ -4,10 +4,8 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Personnel, Unit } from '../types';
 import { PlusIcon, EditIcon, SortIcon, ArrowUpIcon, ArrowDownIcon } from './icons';
 import PersonnelFormModal from './PersonnelFormModal';
-import { supabase } from '../supabaseClient';
 import Pagination from './Pagination';
 import Toast from './Toast';
-import ConfirmationModal from './ConfirmationModal';
 
 interface PersonnelViewProps {
     personnel: Personnel[];
@@ -31,8 +29,6 @@ const PersonnelView: React.FC<PersonnelViewProps> = ({ personnel, setPersonnel, 
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(15);
     const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
-    const [personnelToDelete, setPersonnelToDelete] = useState<string | null>(null);
-    const [isDeleting, setIsDeleting] = useState(false);
 
     const unitMap = useMemo(() => new Map(units.map(u => [u.id, u.name])), [units]);
 
@@ -67,7 +63,6 @@ const PersonnelView: React.FC<PersonnelViewProps> = ({ personnel, setPersonnel, 
                         bValue = b[sortConfig.key];
                 }
                 
-                // Treat null or undefined as empty strings for consistent sorting
                 aValue = aValue || '';
                 bValue = bValue || '';
 
@@ -95,34 +90,6 @@ const PersonnelView: React.FC<PersonnelViewProps> = ({ personnel, setPersonnel, 
     const openFormModal = (p: Personnel | null = null) => {
         setPersonnelToEdit(p);
         setIsFormModalOpen(true);
-    };
-    
-    const handleDelete = (personnelId: string) => {
-        setPersonnelToDelete(personnelId);
-    };
-
-    const confirmDelete = async () => {
-        if (!personnelToDelete) return;
-        setIsDeleting(true);
-        try {
-            const { error: invokeError } = await supabase.functions.invoke('delete-personnel', {
-                body: { personnelId: personnelToDelete },
-            });
-
-            if (invokeError) {
-                const errorMessage = invokeError.context?.error || invokeError.message;
-                throw new Error(errorMessage);
-            }
-            
-            setPersonnel(personnel.filter(p => p.id !== personnelToDelete));
-            setNotification('Data personil berhasil dihapus.');
-
-        } catch (error: any) {
-            alert(`Gagal menghapus personil: ${error.message}`);
-        } finally {
-            setIsDeleting(false);
-            setPersonnelToDelete(null);
-        }
     };
     
     // Sorting Logic
@@ -225,17 +192,6 @@ const PersonnelView: React.FC<PersonnelViewProps> = ({ personnel, setPersonnel, 
                     personnelToEdit={personnelToEdit}
                     units={units}
                     onActionSuccess={setNotification}
-                />
-            )}
-
-            {personnelToDelete && (
-                <ConfirmationModal
-                    isOpen={!!personnelToDelete}
-                    onClose={() => setPersonnelToDelete(null)}
-                    onConfirm={confirmDelete}
-                    title="Konfirmasi Hapus Personil"
-                    message="Apakah Anda yakin ingin menghapus personil ini? Tindakan ini juga akan menghapus akun login terkait secara permanen."
-                    isConfirming={isDeleting}
                 />
             )}
         </div>

@@ -20,7 +20,7 @@ const App: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [currentView, setCurrentView] = useState('dashboard');
-    // Change default theme from 'dark' to 'light'
+    // Set default theme to light
     const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
 
     const [reports, setReports] = useState<Report[]>([]);
@@ -75,13 +75,10 @@ const App: React.FC = () => {
 
             if (profileError) throw new Error(`Gagal mengambil profil pengguna: ${profileError.message}`);
             if (!profileList || profileList.length === 0) {
-                throw new Error('Profil pengguna tidak ditemukan. Penyebab paling umum adalah kebijakan Row Level Security (RLS) pada tabel \'profiles\' di Supabase yang tidak mengizinkan pengguna membaca data mereka sendiri. Silakan hubungi administrator untuk menambahkan kebijakan SELECT pada tabel \'profiles\' untuk pengguna yang terautentikasi.');
+                throw new Error('Profil pengguna tidak ditemukan.');
             }
-            // If there are multiple profiles (which shouldn't happen but is the cause of the error),
-            // we robustly take the first one to prevent the app from crashing.
-            const profileData = profileList[0];
             
-            // FIX: Cast to unknown first to resolve type incompatibility error.
+            const profileData = profileList[0];
             const profile = profileData as unknown as { role: UserRole; unit_id: string; units: { name: string } | null };
             setUserRole(profile.role);
             setOperatorUnitId(profile.unit_id);
@@ -89,32 +86,24 @@ const App: React.FC = () => {
                 setOperatorUnitName(profile.units.name);
             }
 
-            // Fetch all other data in parallel
+            // Fetch other data. Removed user_emails fetch to prevent "Failed to fetch" errors if view doesn't exist.
             const [
                 { data: unitsData, error: unitsError },
                 { data: personnelData, error: personnelError },
                 { data: reportsData, error: reportsError },
-                { data: userEmailsData, error: userEmailsError },
             ] = await Promise.all([
                 supabase.from('units').select('*'),
-                supabase.from('personnel').select('*'), // Query personnel separately
+                supabase.from('personnel').select('*'), 
                 supabase.from('reports')
                     .select(`*, stolen_vehicles(*), status_history(*)`)
                     .order('report_date', { ascending: false }),
-                // FIX: Query the new 'user_emails' view to securely fetch emails for operators.
-                // This requires a database view and RLS policy to be created first.
-                supabase.from('user_emails').select('id, email'),
             ]);
 
             if (unitsError) throw unitsError;
             if (personnelError) throw personnelError;
             if (reportsError) throw reportsError;
-            if (userEmailsError) throw userEmailsError;
             
             setUnits(unitsData || []);
-
-            // Create a map for quick email lookup from all user emails
-            const profileMap = new Map((userEmailsData || []).map(p => [p.id, p.email]));
 
             const formattedPersonnel = (personnelData || []).map((p: any) => ({
                 id: p.id,
@@ -122,8 +111,7 @@ const App: React.FC = () => {
                 rank: p.rank,
                 unitId: p.unit_id,
                 userId: p.user_id,
-                // Manually map the email using the profileMap
-                userEmail: p.user_id ? profileMap.get(p.user_id) : null,
+                userEmail: null, // Email fetching removed for stability
             }));
             setPersonnel(formattedPersonnel);
             
@@ -160,7 +148,6 @@ const App: React.FC = () => {
                         statusDetail: r.status_detail,
                         assignedUnitId: r.assigned_unit_id,
                         assignedPersonnelIds: (assignments || []).map((a: any) => a.personnel_id),
-                        // Map snake_case from DB to camelCase for frontend use
                         stolenVehicles: (r.stolen_vehicles || []).map((v: any) => ({
                             id: v.id,
                             vehicleType: v.vehicle_type,
@@ -178,7 +165,6 @@ const App: React.FC = () => {
                 })
             );
 
-            // Filter out soft-deleted reports so they don't appear in the app
             const activeReports = reportsWithAssignments.filter((r: any) => r.status !== ReportStatus.DIHAPUS);
             setReports(activeReports);
             
@@ -220,7 +206,7 @@ const App: React.FC = () => {
              <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 dark:bg-dark-800 text-red-500">
                 <h2 className="text-xl font-bold mb-4">Gagal memuat data</h2>
                 <p className="max-w-md text-center mb-6">{error}</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Pastikan koneksi internet dan konfigurasi Supabase sudah benar. Coba logout dan login kembali.</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Pastikan koneksi internet stabil. Coba logout dan login kembali.</p>
                 <button onClick={handleLogout} className="bg-primary text-white font-bold py-2 px-4 rounded">
                     Logout
                 </button>

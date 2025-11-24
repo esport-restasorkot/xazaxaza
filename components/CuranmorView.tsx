@@ -37,12 +37,6 @@ const CuranmorView: React.FC<CuranmorViewProps> = ({ stolenVehicles, setStolenVe
         setVehicleToEdit(null);
         setIsModalOpen(false);
     };
-
-    const handleDelete = (vehicleId: string) => {
-        if (window.confirm('Apakah Anda yakin ingin menghapus data kendaraan ini?')) {
-            setStolenVehicles(stolenVehicles.filter(v => v.id !== vehicleId));
-        }
-    };
     
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
